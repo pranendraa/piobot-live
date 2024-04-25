@@ -1,0 +1,6 @@
+python-telegram-bot==13.7
+requests
+pytz
+datetime
+urllib3
+python-dotenv
