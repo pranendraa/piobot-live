@@ -1,4 +1,4 @@
-import requests
+import httpx
 import re
 import pytz
 from  datetime import datetime
@@ -13,13 +13,13 @@ basicConfig(
     level=INFO
 )
 
-LOGGER = getLogger("update")
+LOGGER = getLogger(__name__)
 
 jakarta_timezone = pytz.timezone('Asia/Jakarta')
 
 # headers for the api
 headers = {
-    "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-A107F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 Mobile Safari/537.36",
+    "User-Agent": "Not a RoBot",
     "Referer": "https://www.tiktok.com/"
 }
 
@@ -27,7 +27,7 @@ def get_tt_room_id(tiktok_username):
     try:
         api = f"https://www.tiktok.com/@{tiktok_username}/live"
 
-        response = requests.get(api, allow_redirects=False, headers=headers)
+        response = httpx.get(api, follow_redirects=False, headers=headers)
         if response.status_code == 404:
             raise ValueError()
 
@@ -49,7 +49,7 @@ def is_user_tt_live(room_id):
         # content = requests.get(url, headers=headers).text
         # return '"status":4' not in content
 
-        content = requests.get(url, headers=headers).json()
+        content = httpx.get(url, headers=headers).json()
         status = content['LiveRoomInfo']['status']
         cover_url = content['LiveRoomInfo']['coverUrl']
         title = content['LiveRoomInfo']['title']
@@ -80,7 +80,7 @@ def get_tt_stream_url(room_id):
     try:
         api = f"https://webcast.tiktok.com/webcast/room/info/?aid=1988&room_id={room_id}"
 
-        response = requests.get(api, headers=headers)
+        response = httpx.get(api, headers=headers)
 
         json = response.json()
         url = json['data']['stream_url']['hls_pull_url']

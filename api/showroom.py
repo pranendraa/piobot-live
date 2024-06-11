@@ -1,5 +1,5 @@
 import time
-import requests
+import httpx
 import pytz
 from datetime import datetime
 from logging import basicConfig, getLogger, INFO
@@ -13,20 +13,21 @@ basicConfig(
     level=INFO
 )
 
-LOGGER = getLogger("update")
+LOGGER = getLogger(__name__)
 
 jakarta_timezone = pytz.timezone('Asia/Jakarta')
 
 # headers for the api
 headers = {
-    "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-A107F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 Mobile Safari/537.36",
+    "User-Agent": "Not a RoBot",
+    "Content-Type": "application/json"
 }
 
 def get_streaming_url(room_id):
     try:
         url = f"https://www.showroom-live.com/api/live/streaming_url?room_id={room_id}"
 
-        response = requests.get(url, headers=headers)
+        response = httpx.get(url, headers=headers)
         data = response.json()
 
         streaming_url_list = data.get("streaming_url_list", [])
@@ -36,13 +37,13 @@ def get_streaming_url(room_id):
 
         return None
     except Exception as e:
-        LOGGER.warning("Error get stream url showroom: ", e)
+        LOGGER.warning(f"Error get stream url showroom: {e}")
 
 def check_profile_live_status(room_id):
     try:
         api = f"https://www.showroom-live.com/api/room/profile?room_id={room_id}"
 
-        response = requests.get(api, headers=headers)
+        response = httpx.get(api, headers=headers)
         data = response.json()
 
         room_url_key = data["room_url_key"]
@@ -50,6 +51,7 @@ def check_profile_live_status(room_id):
         image = data["image"]
         current_live_started_at = data["current_live_started_at"]
         share_url_live = data["share_url_live"]
+        view_num = data["view_num"]
         premium_room_type = data["premium_room_type"]
 
         if premium_room_type == 1:
@@ -57,9 +59,9 @@ def check_profile_live_status(room_id):
         else:
             is_premium = False
 
-        return room_url_key, is_onlive, image, current_live_started_at, share_url_live, is_premium
+        return room_url_key, is_onlive, image, current_live_started_at, share_url_live, view_num, is_premium
     except Exception as e:
-        LOGGER.warning("Error:", e, "\nGunakan room_id yang valid!!")
+        LOGGER.warning(f"Error: {e}\nGunakan room_id yang valid!!")
 
 def get_id_history(room_id, current_live_started_at):
     try:
@@ -68,7 +70,7 @@ def get_id_history(room_id, current_live_started_at):
         waktu_mulai = datetime.fromtimestamp(current_live_started_at, tz=pytz.utc).astimezone(jakarta_timezone).strftime("%A, %d %b %Y | %H:%M:%S WIB")
         
         while True:
-            response = requests.get(api, headers=headers)
+            response = httpx.get(api, headers=headers)
             if response.status_code == 200:
                 data = response.json()
                 recents = data.get("recents", [])
@@ -93,7 +95,7 @@ def get_history_live(data_id):
     try:
         api = f"https://api.crstlnz.my.id/api/recent/{data_id}"
 
-        response = requests.get(api, headers=headers)
+        response = httpx.get(api, headers=headers)
         data = response.json()
 
         waktu_mulai = data["live_info"]["date"]["start"]
@@ -107,7 +109,7 @@ def get_history_live(data_id):
         # hitung durasi
         durasi = calculate_duration_hhmmss(waktu_mulai, waktu_selesai)
 
-        rupiah_gold = total_gifts * 105
+        rupiah_gold = total_gifts * 102
 
         # format angka ada titiknya
         viewers = format_angka(viewers)
@@ -118,7 +120,7 @@ def get_history_live(data_id):
 
         return waktu_mulai, waktu_selesai, durasi, viewers, active_viewers, total_gifts, comments, users_comments, rupiah_gold
     except Exception as e:
-        LOGGER.warning("Error Get History Live SR:", e)
+        LOGGER.warning(f"Error Get History Live SR: {e}")
 
 def convert_seconds_to_hms(seconds):
     hours = seconds // 3600

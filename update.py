@@ -1,6 +1,6 @@
 import os
 import subprocess
-import requests
+import httpx
 from io import StringIO
 from logging import basicConfig, getLogger, INFO
 from dotenv import load_dotenv
@@ -14,11 +14,11 @@ basicConfig(
     level=INFO,
 )
 
-LOGGER = getLogger("update")
+LOGGER = getLogger(__name__)
 
 # Mendapatkan isi dari file .env di GitHub Gist
 CONFIG_FILE_URL = os.getenv("CONFIG_FILE_URL", "")
-response = requests.get(CONFIG_FILE_URL)
+response = httpx.get(CONFIG_FILE_URL)
 env_content = response.text
 
 # Membuat buffer string dan menulis isi .env ke dalamnya

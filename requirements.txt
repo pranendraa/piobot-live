@@ -1,5 +1,5 @@
 python-telegram-bot==13.7
-requests
+httpx
 pytz
 datetime
 urllib3

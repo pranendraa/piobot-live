@@ -1,5 +1,5 @@
 import time
-import requests
+import httpx
 import re
 import pytz
 from datetime import datetime
@@ -14,13 +14,14 @@ basicConfig(
     level=INFO
 )
 
-LOGGER = getLogger("update")
+LOGGER = getLogger(__name__)
 
 jakarta_timezone = pytz.timezone('Asia/Jakarta')
 
 # headers for the api
 headers = {
-    "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-A107F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 Mobile Safari/537.36",
+    "User-Agent": "Not a RoBot",
+    "Content-Type": "application/json"
 }
 
 def get_livestreams(channel_username):
@@ -52,7 +53,7 @@ def get_livestreams(channel_username):
         """
 
         # Create a session object
-        session = requests.Session()
+        # session = requests.Session()
 
         # Set the initial page number and category
         page = 1
@@ -76,7 +77,7 @@ def get_livestreams(channel_username):
                 }
 
                 # Send a POST request to the GraphQL API
-                response = session.post(url, json=data, headers=headers)
+                response = httpx.post(url, json=data, headers=headers)
 
                 # Check the status code
                 if response.status_code == 200:
@@ -116,7 +117,7 @@ def get_livestreams(channel_username):
 
 def get_infodata(slug):
     try:
-        req = requests.get(f"https://www.idn.app/mobile-api/v3/livestream/{slug}", headers=headers)
+        req = httpx.get(f"https://www.idn.app/mobile-api/v3/livestream/{slug}", headers=headers)
 
         content = req.json()
         status = content['data']['status']
@@ -150,7 +151,7 @@ def get_id_history_idn(slug):
         api = "https://api.crstlnz.my.id/api/recent?sort=date&page=1&filter=all&order=-1&group=jkt48&type=idn"
 
         while True:
-            response = requests.get(api, headers=headers)
+            response = httpx.get(api, headers=headers)
             if response.status_code == 200:
                 data = response.json()
                 recents = data.get("recents", [])
@@ -165,13 +166,13 @@ def get_id_history_idn(slug):
             else:
                 return f"Failed to fetch data: {response.status_code}"
     except Exception as e:
-        LOGGER.warning("Error Get ID History IDN:", e)
+        LOGGER.warning(f"Error Get ID History IDN: {e}")
 
 def get_history_live_idn(data_id):
     try:
         api = f"https://api.crstlnz.my.id/api/recent/{data_id}"
 
-        response = requests.get(api, headers=headers)
+        response = httpx.get(api, headers=headers)
         data = response.json()
 
         waktu_mulai = data["live_info"]["date"]["start"]
@@ -202,7 +203,7 @@ def get_history_live_idn(data_id):
 
         return waktu_mulai_jakarta, waktu_selesai_jakarta, durasi, viewers, active_viewers, total_gifts, comments, users_comments, rupiah_gold
     except Exception as e:
-        LOGGER.warning("Error Get History Live IDN:", e)
+        LOGGER.warning(f"Error Get History Live IDN: {e}")
 
 def convert_seconds_to_hms(seconds):
     hours = seconds // 3600
